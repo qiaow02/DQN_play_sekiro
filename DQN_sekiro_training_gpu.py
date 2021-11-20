@@ -20,8 +20,9 @@ import random
 import tensorflow.compat.v1 as tf
 
 def pause_game(paused):
+    KEY_P = 'P'
     keys = key_check()
-    if 'T' in keys:
+    if KEY_P in keys:
         if paused:
             paused = False
             print('start game')
@@ -35,7 +36,7 @@ def pause_game(paused):
         while True:
             keys = key_check()
             # pauses game and can get annoying.
-            if 'T' in keys:
+            if KEY_P in keys:
                 if paused:
                     paused = False
                     print('start game')
@@ -48,33 +49,55 @@ def pause_game(paused):
 
 def self_blood_count(self_gray):
     self_blood = 0
-    for self_bd_num in self_gray[469]:
+    # for self_bd_num in self_gray[469]:
+    for self_bd_num in self_gray[1200]:
         # self blood gray pixel 80~98
         # 血量灰度值80~98
-        if self_bd_num > 90 and self_bd_num < 98:
+        # print('self:', self_bd_num)
+        if self_bd_num > 70 and self_bd_num < 98:
             self_blood += 1
+    # print('self:', self_blood)
     return self_blood
 
 def boss_blood_count(boss_gray):
     boss_blood = 0
     for boss_bd_num in boss_gray[0]:
     # boss blood gray pixel 65~75
-    # 血量灰度值65~75 
-        if boss_bd_num > 65 and boss_bd_num < 75:
+    # 血量灰度值65~75
+    #     print('boss:', boss_bd_num)
+        if boss_bd_num > 50 and boss_bd_num < 75:
             boss_blood += 1
+    # print('boss:', boss_blood)
     return boss_blood
 
 def take_action(action):
     if action == 0:     # n_choose
+        directkeys.lock_vision()
         pass
-    elif action == 1:   # j
+    elif action == 1:   # T
+        directkeys.lock_vision()
         directkeys.attack()
-    elif action == 2:   # k
+    elif action == 2:   # SPACE
+        directkeys.lock_vision()
         directkeys.jump()
-    elif action == 3:   # m
+    elif action == 3:   # Y
+        directkeys.lock_vision()
         directkeys.defense()
-    elif action == 4:   # r
+    elif action == 4:   # LSHIFT
+        directkeys.lock_vision()
         directkeys.dodge()
+
+def get_action_name(action):
+    if action == 0:
+        return 'lock_vision'
+    elif action == 1:
+        return 'attack'
+    elif action == 2:
+        return 'jump'
+    elif action == 3:
+        return 'defense'
+    elif action == 4:
+        return 'dodge'
 
 
 def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, stop, emergence_break):
@@ -133,10 +156,10 @@ DQN_model_path = "model_gpu"
 DQN_log_path = "logs_gpu/"
 WIDTH = 96
 HEIGHT = 88
-window_size = (320,100,704,452)#384,352  192,176 96,88 48,44 24,22
+window_size = (600,104,1900,1430)
 # station window_size
 
-blood_window = (60,91,280,562)
+blood_window = (155,172,520,1373)
 # used to get boss and self blood
 
 action_size = 5
@@ -182,7 +205,7 @@ if __name__ == '__main__':
         while True:
             station = np.array(station).reshape(-1,HEIGHT,WIDTH,1)[0]
             # reshape station for tf input placeholder
-            print('loop took {} seconds'.format(time.time()-last_time))
+            # print('loop took {} seconds'.format(time.time()-last_time))
             last_time = time.time()
             target_step += 1
             # get the action by state
@@ -200,6 +223,7 @@ if __name__ == '__main__':
             reward, done, stop, emergence_break = action_judge(boss_blood, next_boss_blood,
                                                                self_blood, next_self_blood,
                                                                stop, emergence_break)
+            print('self_blood=%s boss_blood=%s action=%s'%(self_blood, boss_blood, get_action_name(action)))
             # get action reward
             if emergence_break == 100:
                 # emergence break , save model and paused
