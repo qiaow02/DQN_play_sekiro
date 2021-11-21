@@ -50,13 +50,15 @@ def pause_game(paused):
 def self_blood_count(self_gray):
     self_blood = 0
     # for self_bd_num in self_gray[469]:
-    for self_bd_num in self_gray[1200]:
+    for self_bd_num in self_gray[1180]:
         # self blood gray pixel 80~98
         # 血量灰度值80~98
         # print('self:', self_bd_num)
-        if self_bd_num > 70 and self_bd_num < 98:
-            self_blood += 1
-    # print('self:', self_blood)
+        if self_bd_num > 6 and self_bd_num < 14:
+            self_blood = self_blood + 1
+    # np.set_printoptions(threshold=len(self_gray))
+    # print(np.array(self_gray))
+    print('self:', self_blood)
     return self_blood
 
 def boss_blood_count(boss_gray):
@@ -66,7 +68,7 @@ def boss_blood_count(boss_gray):
     # 血量灰度值65~75
     #     print('boss:', boss_bd_num)
         if boss_bd_num > 50 and boss_bd_num < 75:
-            boss_blood += 1
+            boss_blood = boss_blood + 1
     # print('boss:', boss_blood)
     return boss_blood
 
@@ -105,31 +107,29 @@ def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, stop,
     # emergence_break is used to break down training
     # 用于防止出现意外紧急停止训练防止错误训练数据扰乱神经网络
     if next_self_blood < 3:     # self dead
-        if emergence_break < 2:
-            reward = -10
-            done = 1
-            stop = 0
-            emergence_break += 1
-            return reward, done, stop, emergence_break
-        else:
-            reward = -10
-            done = 1
-            stop = 0
-            emergence_break = 100
-            return reward, done, stop, emergence_break
+        reward = -10
+        done = 1
+        stop = 0
+        emergence_break = emergence_break + 1
+        return reward, done, stop, emergence_break
     elif next_boss_blood - boss_blood > 15:   #boss dead
-        if emergence_break < 2:
-            reward = 20
-            done = 0
-            stop = 0
-            emergence_break += 1
-            return reward, done, stop, emergence_break
-        else:
-            reward = 20
-            done = 0
-            stop = 0
-            emergence_break = 100
-            return reward, done, stop, emergence_break
+        reward = 20
+        done = 0
+        stop = 0
+        emergence_break = emergence_break + 1
+        return reward, done, stop, emergence_break
+        # if emergence_break < 2:
+        #     reward = 20
+        #     done = 0
+        #     stop = 0
+        #     emergence_break = emergence_break + 1
+        #     return reward, done, stop, emergence_break
+        # else:
+        #     reward = 20
+        #     done = 0
+        #     stop = 0
+        #     emergence_break = 100
+        #     return reward, done, stop, emergence_break
     else:
         self_blood_reward = 0
         boss_blood_reward = 0

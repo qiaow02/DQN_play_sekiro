@@ -283,9 +283,9 @@ def jump():
 def dodge():#闪避
     PressKey(LSHIFT)
     time.sleep(0.1)
+    PressKey(D)
+    ReleaseKey(D)
     ReleaseKey(LSHIFT)
-    time.sleep(0.2)
-    attack()
     #time.sleep(0.1)
     
 def lock_vision():

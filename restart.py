@@ -10,7 +10,7 @@ import time
 
 def restart():
     print("死,restart")
-    time.sleep(8)
+    time.sleep(0.1)
     directkeys.lock_vision()
     time.sleep(0.2)
     directkeys.attack()
