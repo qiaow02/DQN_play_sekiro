@@ -50,20 +50,20 @@ def pause_game(paused):
 def self_blood_count(self_gray):
     self_blood = 0
     # for self_bd_num in self_gray[469]:
-    for self_bd_num in self_gray[1180]:
+    for self_bd_num in self_gray[1188]:
         # self blood gray pixel 80~98
         # 血量灰度值80~98
         # print('self:', self_bd_num)
-        if self_bd_num > 6 and self_bd_num < 14:
+        if self_bd_num > 70 and self_bd_num < 98:
             self_blood = self_blood + 1
     # np.set_printoptions(threshold=len(self_gray))
     # print(np.array(self_gray))
-    print('self:', self_blood)
+    # print('self:', self_blood)
     return self_blood
 
 def boss_blood_count(boss_gray):
     boss_blood = 0
-    for boss_bd_num in boss_gray[0]:
+    for boss_bd_num in boss_gray[3]:
     # boss blood gray pixel 65~75
     # 血量灰度值65~75
     #     print('boss:', boss_bd_num)
@@ -85,9 +85,12 @@ def take_action(action):
     elif action == 3:   # Y
         directkeys.lock_vision()
         directkeys.defense()
-    elif action == 4:   # LSHIFT
+    elif action == 4:   # LSHIFT+D
         directkeys.lock_vision()
-        directkeys.dodge()
+        directkeys.right_dodge()
+    elif action == 5:   # LSHIFT+A
+        directkeys.lock_vision()
+        directkeys.left_dodge()
 
 def get_action_name(action):
     if action == 0:
@@ -99,20 +102,36 @@ def get_action_name(action):
     elif action == 3:
         return 'defense'
     elif action == 4:
-        return 'dodge'
+        return 'right_dodge'
+    elif action == 5:
+        return 'left_dodge'
 
 
 def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, stop, emergence_break):
     # get action reward
     # emergence_break is used to break down training
     # 用于防止出现意外紧急停止训练防止错误训练数据扰乱神经网络
-    if next_self_blood < 3:     # self dead
+    if (self_blood == 0 and boss_blood == 0) \
+            or (next_self_blood == 0 and next_boss_blood == 0)\
+            or (self_blood == 0 and next_self_blood == 0):
+        reward = 0
+        done = 0
+        stop = 0
+        emergence_break = 100
+        return reward, done, stop, emergence_break
+    elif next_self_blood - self_blood > 40:     # self dead
         reward = -10
         done = 1
         stop = 0
         emergence_break = emergence_break + 1
         return reward, done, stop, emergence_break
-    elif next_boss_blood - boss_blood > 15:   #boss dead
+    elif next_boss_blood - boss_blood == 0:     # boss no harm
+        reward = -1
+        done = 0
+        stop = 0
+        emergence_break = emergence_break + 1
+        return reward, done, stop, emergence_break
+    elif next_boss_blood - boss_blood > 15:   #boss loss 1 life
         reward = 20
         done = 0
         stop = 0
@@ -150,10 +169,11 @@ def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, stop,
         done = 0
         emergence_break = 0
         return reward, done, stop, emergence_break
-        
 
-DQN_model_path = "model_gpu"
-DQN_log_path = "logs_gpu/"
+
+BOSS = "boss_2"
+DQN_model_path = "model_gpu_{}".format(BOSS)
+DQN_log_path = "logs_gpu_{}/".format(BOSS)
 WIDTH = 96
 HEIGHT = 88
 window_size = (600,104,1900,1430)
@@ -162,7 +182,7 @@ window_size = (600,104,1900,1430)
 blood_window = (155,172,520,1373)
 # used to get boss and self blood
 
-action_size = 5
+action_size = 6
 # action[n_choose,j,k,m,r]
 # j-attack, k-jump, m-defense, r-dodge, n_choose-do nothing
 
@@ -223,7 +243,10 @@ if __name__ == '__main__':
             reward, done, stop, emergence_break = action_judge(boss_blood, next_boss_blood,
                                                                self_blood, next_self_blood,
                                                                stop, emergence_break)
-            print('self_blood=%s boss_blood=%s action=%s'%(self_blood, boss_blood, get_action_name(action)))
+            print('self_blood=%s->%s boss_blood=%s->%s action=%s reward=%s'
+                  %(self_blood, next_self_blood, boss_blood, next_boss_blood, get_action_name(action), reward))
+            # cv2.imwrite('D:\\app\\github\\DQN_play_sekiro\\imgs\\self_blood=%s next_self_blood=%s boss_blood=%s next_boss_blood=%s action=%s reward=%s.jpg'
+            #       %(self_blood, next_self_blood, boss_blood, next_boss_blood, get_action_name(action), reward), blood_window_gray)
             # get action reward
             if emergence_break == 100:
                 # emergence break , save model and paused
@@ -244,6 +267,8 @@ if __name__ == '__main__':
             self_blood = next_self_blood
             boss_blood = next_boss_blood
             total_reward += reward
+            if paused:
+                agent.save_model()
             paused = pause_game(paused)
             if done == 1:
                 break

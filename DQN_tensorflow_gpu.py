@@ -254,7 +254,7 @@ class DQN():
 
         # Step 2: calculate TD aim value
         y_batch = []
-        # give the next_state_batch flow to target_Q_value and caculate the next state's Q_value
+        # give the next_state_batch flow to target_Q_value and calculate the next state's Q_value
         Q_value_batch = self.target_Q_value.eval(feed_dict={self.state_input: next_state_batch})
         # caculate the TD aim value by the formulate
         for i in range(0, BATCH_SIZE):

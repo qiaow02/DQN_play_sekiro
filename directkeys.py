@@ -280,19 +280,26 @@ def jump():
     attack()
     #time.sleep(0.1)
     
-def dodge():#闪避
+def right_dodge():#闪避
     PressKey(LSHIFT)
     time.sleep(0.1)
     PressKey(D)
     ReleaseKey(D)
     ReleaseKey(LSHIFT)
     #time.sleep(0.1)
+
+def left_dodge():#闪避
+    PressKey(LSHIFT)
+    time.sleep(0.1)
+    PressKey(A)
+    ReleaseKey(A)
+    ReleaseKey(LSHIFT)
     
 def lock_vision():
     PressKey(U)
     time.sleep(0.3)
     ReleaseKey(U)
-    time.sleep(0.1)
+    # time.sleep(0.1)
     
 def go_forward_QL(t):
     PressKey(W)

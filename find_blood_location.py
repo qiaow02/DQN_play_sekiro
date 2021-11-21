@@ -15,11 +15,11 @@ import os
 def self_blood_count(self_gray):
     self_blood = 0
     # for self_bd_num in self_gray[469]:
-    for self_bd_num in self_gray[1180]:
+    for self_bd_num in self_gray[1188]:
         # self blood gray pixel 80~98
         # 血量灰度值80~98
         # print('self:', self_bd_num)
-        if self_bd_num > 6 and self_bd_num < 14:
+        if self_bd_num > 70 and self_bd_num < 98:
             self_blood = self_blood + 1
     # np.set_printoptions(threshold=len(self_gray))
     # print(np.array(self_gray))
@@ -28,7 +28,7 @@ def self_blood_count(self_gray):
 
 def boss_blood_count(boss_gray):
     boss_blood = 0
-    for boss_bd_num in boss_gray[0]:
+    for boss_bd_num in boss_gray[3]:
     # boss blood gray pixel 65~75
     # 血量灰度值65~75 
     #     print('boss:', boss_bd_num)
@@ -45,6 +45,25 @@ L_t = 3
 
 window_size = (600,104,1900,1430)#384,344  192,172 96,86
 blood_window = (155,172,520,1373)
+
+# if __name__ == '__main__':
+#     # img = cv2.imread("C:\\Users\\Administrator\\Desktop\\self_blood=34 next_self_blood=45 boss_blood=179 next_boss_blood=181 action=attack reward=0_cr.jpg")
+#     img = cv2.imread("C:\\Users\\Administrator\\Desktop\\window1_screenshot_19.11.2021.png")
+#     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+#     print('len:%s'%len(img_gray))
+#     for i in range(len(img_gray)):
+#         self_blood = 0
+#         if i > 100:
+#             break
+#         print('line:%s', i)
+#         for bd_num in img_gray[i]:
+#             if bd_num > 50 and bd_num < 75:
+#                 self_blood = self_blood + 1
+#             print('%s '%bd_num, end='')
+#         print('')
+#         print('self_blood:%s'%self_blood)
+
+
 
 # if __name__ == '__main__':
 #     for i in list(range(wait_time))[::-1]:
