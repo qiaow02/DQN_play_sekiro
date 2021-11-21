@@ -119,12 +119,6 @@ def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, stop,
         stop = 0
         emergence_break = 100
         return reward, done, stop, emergence_break
-    elif next_self_blood - self_blood > 40:     # self dead
-        reward = -10
-        done = 1
-        stop = 0
-        emergence_break = emergence_break + 1
-        return reward, done, stop, emergence_break
     elif next_boss_blood - boss_blood == 0:     # boss no harm
         reward = -1
         done = 0
@@ -134,6 +128,12 @@ def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, stop,
     elif next_boss_blood - boss_blood > 15:   #boss loss 1 life
         reward = 20
         done = 0
+        stop = 0
+        emergence_break = emergence_break + 1
+        return reward, done, stop, emergence_break
+    elif next_self_blood - self_blood > 40:  # self dead
+        reward = -10
+        done = 1
         stop = 0
         emergence_break = emergence_break + 1
         return reward, done, stop, emergence_break
@@ -171,6 +171,21 @@ def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, stop,
         return reward, done, stop, emergence_break
 
 
+def copy_profile(boss_id):
+    import os
+    import shutil
+
+    source_path = os.path.abspath(r'D:\\gain\\pytorch\\{}\\76561197960267366'.format(boss_id))
+    target_path = os.path.abspath(r'C:\\Users\\Administrator\\AppData\\Roaming\\Sekiro\\76561197960267366')
+
+    if os.path.exists(source_path):
+        # 如果目标路径存在原文件夹的话就先删除
+        shutil.rmtree(target_path)
+
+    shutil.copytree(source_path, target_path)
+    print('copy dir finished!')
+
+
 BOSS = "boss_2"
 DQN_model_path = "model_gpu_{}".format(BOSS)
 DQN_log_path = "logs_gpu_{}/".format(BOSS)
@@ -198,6 +213,7 @@ paused = True
 # used to stop training
 
 if __name__ == '__main__':
+    copy_profile(BOSS)
     agent = DQN(WIDTH, HEIGHT, action_size, DQN_model_path, DQN_log_path)
     # DQN init
     paused = pause_game(paused)
