@@ -238,16 +238,21 @@ def ReleaseKey(hexKeyCode):
     
 def defense():
     PressKey(Y)
-    time.sleep(0.05)
+    time.sleep(0.1)
     ReleaseKey(Y)
     #time.sleep(0.1)
 
 
-def attack():
+def slash_attack():
     PressKey(T)
     time.sleep(0.05)
     ReleaseKey(T)
-    #time.sleep(0.1)
+
+
+def long_attack():
+    PressKey(T)
+    time.sleep(0.5)
+    ReleaseKey(T)
     
 def go_forward():
     PressKey(W)
@@ -282,16 +287,16 @@ def jump():
     
 def right_dodge():#闪避
     PressKey(LSHIFT)
-    time.sleep(0.1)
     PressKey(D)
+    time.sleep(0.1)
     ReleaseKey(D)
     ReleaseKey(LSHIFT)
     #time.sleep(0.1)
 
 def left_dodge():#闪避
     PressKey(LSHIFT)
-    time.sleep(0.1)
     PressKey(A)
+    time.sleep(0.1)
     ReleaseKey(A)
     ReleaseKey(LSHIFT)
     

@@ -53,11 +53,11 @@ def pause_game(paused):
 def self_blood_count(self_gray):
     self_blood = 0
     # for self_bd_num in self_gray[469]:
-    for self_bd_num in self_gray[1188]:
+    for self_bd_num in self_gray[1188][0:125]:
         # self blood gray pixel 80~98
         # 血量灰度值80~98
         # print('self:', self_bd_num)
-        if self_bd_num > 70 and self_bd_num < 98:
+        if self_bd_num > 60 and self_bd_num < 98:
             self_blood = self_blood + 1
     # np.set_printoptions(threshold=len(self_gray))
     # print(np.array(self_gray))
@@ -77,12 +77,12 @@ def boss_blood_count(boss_gray):
     return boss_blood
 
 def take_action(action):
-    if action == 0:     # n_choose
+    if action == 0:     # T
         directkeys.lock_vision()
-        pass
+        directkeys.slash_attack()
     elif action == 1:   # T
         directkeys.lock_vision()
-        directkeys.attack()
+        directkeys.long_attack()
     elif action == 2:   # SPACE
         directkeys.lock_vision()
         directkeys.jump()
@@ -98,9 +98,9 @@ def take_action(action):
 
 def get_action_name(action):
     if action == 0:
-        return 'lock_vision'
+        return 'slash_attach'
     elif action == 1:
-        return 'attack'
+        return 'long_attack'
     elif action == 2:
         return 'jump'
     elif action == 3:
@@ -123,67 +123,73 @@ def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, stop,
         stop = 0
         emergence_break = 100
         return reward, done, stop, emergence_break
-    elif next_boss_blood - boss_blood == 0:     # boss no harm
-        if (self_blood - next_self_blood) <= 5:
-            reward = 1
-            done = 0
-            stop = 0
-            emergence_break = emergence_break + 1
-        elif self_blood - next_self_blood > 5:
+    elif next_boss_blood - boss_blood == 0 and boss_blood > 0:         # when boss no harm
+        if (next_self_blood - self_blood) > 90:     # self dead
             reward = -10
+            done = 1
+            stop = 0
+        elif self_blood - next_self_blood > 5:      # self harm
+            reward = -5
             done = 0
             stop = 0
-            emergence_break = emergence_break + 1
         else:
             reward = -1
             done = 0
             stop = 0
-            emergence_break = emergence_break + 1
         return reward, done, stop, emergence_break
-    elif next_boss_blood - boss_blood > 15:   #boss loss 1 life
+    elif next_boss_blood - boss_blood > 20:   # boss loss 1 life
+        if (next_self_blood - self_blood) > 90:     # self dead
+            reward = -10
+            done = 1
+            stop = 0
+        elif self_blood - next_self_blood > 5:      # self harm
+            reward = 5
+            done = 0
+            stop = 0
+        else:
+            reward = 20
+            done = 0
+            stop = 0
+        return reward, done, stop, emergence_break
+    elif boss_blood - next_boss_blood > 3 and next_boss_blood > 0:  # boss harm
+        if (next_self_blood - self_blood) > 90:  # self dead
+            reward = -5
+            done = 1
+            stop = 0
+        elif self_blood - next_self_blood > 5:  # self harm
+            reward = 1
+            done = 0
+            stop = 0
+        else:
+            reward = 10
+            done = 0
+            stop = 0
+        return reward, done, stop, emergence_break
+    elif boss_blood - next_boss_blood > 3 and next_boss_blood == 0:  # boss dead by attack
+        if (next_self_blood - self_blood) > 90:  # self dead
+            reward = -5
+            done = 1
+            stop = 0
+        elif self_blood - next_self_blood > 5:  # self harm
+            reward = 10
+            done = 0
+            stop = 0
+        else:
+            reward = 20
+            done = 0
+            stop = 0
+        return reward, done, stop, emergence_break
+    elif self_blood > 0 and next_boss_blood == 0: # boss dead anywhere
         reward = 20
         done = 0
         stop = 0
-        emergence_break = emergence_break + 1
+        emergence_break = 100
         return reward, done, stop, emergence_break
-    elif next_self_blood - self_blood > 40:  # self dead
-        reward = -10
-        done = 1
-        stop = 0
-        emergence_break = emergence_break + 1
-        return reward, done, stop, emergence_break
-        # if emergence_break < 2:
-        #     reward = 20
-        #     done = 0
-        #     stop = 0
-        #     emergence_break = emergence_break + 1
-        #     return reward, done, stop, emergence_break
-        # else:
-        #     reward = 20
-        #     done = 0
-        #     stop = 0
-        #     emergence_break = 100
-        #     return reward, done, stop, emergence_break
     else:
-        self_blood_reward = 0
-        boss_blood_reward = 0
-        # print(next_self_blood - self_blood)
-        # print(next_boss_blood - boss_blood)
-        if next_self_blood - self_blood < -7:
-            if stop == 0:
-                self_blood_reward = -6
-                stop = 1
-                # 防止连续取帧时一直计算掉血
-        else:
-            stop = 0
-        if next_boss_blood - boss_blood <= -3:
-            boss_blood_reward = 4
-        # print("self_blood_reward:    ",self_blood_reward)
-        # print("boss_blood_reward:    ",boss_blood_reward)
-        reward = self_blood_reward + boss_blood_reward
+        reward = 0
         done = 0
-        emergence_break = 0
-        return reward, done, stop, emergence_break
+        stop = 0
+    return reward, done, stop, emergence_break
 
 
 def recheck_next_blood(blood, next_blood):
