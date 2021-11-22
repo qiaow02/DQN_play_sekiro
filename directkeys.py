@@ -339,9 +339,9 @@ def press_esc():
     ReleaseKey(esc)
     
 def dead():
-    PressKey(M)
+    PressKey(T)
     time.sleep(0.5)
-    ReleaseKey(M)
+    ReleaseKey(T)
 
 if __name__ == '__main__':
     time.sleep(15)

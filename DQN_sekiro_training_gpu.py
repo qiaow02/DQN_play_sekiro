@@ -21,6 +21,7 @@ import tensorflow.compat.v1 as tf
 
 def pause_game(paused):
     KEY_P = 'P'
+    KEY_L = 'L'
     keys = key_check()
     if KEY_P in keys:
         if paused:
@@ -45,6 +46,8 @@ def pause_game(paused):
                 else:
                     paused = True
                     time.sleep(1)
+            if KEY_L in keys:
+                copy_profile(BOSS)
     return paused
 
 def self_blood_count(self_gray):
@@ -61,9 +64,10 @@ def self_blood_count(self_gray):
     # print('self:', self_blood)
     return self_blood
 
+
 def boss_blood_count(boss_gray):
     boss_blood = 0
-    for boss_bd_num in boss_gray[3]:
+    for boss_bd_num in boss_gray[10]:
     # boss blood gray pixel 65~75
     # 血量灰度值65~75
     #     print('boss:', boss_bd_num)
@@ -120,10 +124,21 @@ def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, stop,
         emergence_break = 100
         return reward, done, stop, emergence_break
     elif next_boss_blood - boss_blood == 0:     # boss no harm
-        reward = -1
-        done = 0
-        stop = 0
-        emergence_break = emergence_break + 1
+        if (self_blood - next_self_blood) <= 5:
+            reward = 1
+            done = 0
+            stop = 0
+            emergence_break = emergence_break + 1
+        elif self_blood - next_self_blood > 5:
+            reward = -10
+            done = 0
+            stop = 0
+            emergence_break = emergence_break + 1
+        else:
+            reward = -1
+            done = 0
+            stop = 0
+            emergence_break = emergence_break + 1
         return reward, done, stop, emergence_break
     elif next_boss_blood - boss_blood > 15:   #boss loss 1 life
         reward = 20
@@ -171,6 +186,13 @@ def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, stop,
         return reward, done, stop, emergence_break
 
 
+def recheck_next_blood(blood, next_blood):
+    if abs(blood - next_blood) <= 5:
+        return blood
+    else:
+        return next_blood
+
+
 def copy_profile(boss_id):
     import os
     import shutil
@@ -183,10 +205,10 @@ def copy_profile(boss_id):
         shutil.rmtree(target_path)
 
     shutil.copytree(source_path, target_path)
-    print('copy dir finished!')
+    print('copy dir {} finished!'.format(boss_id))
 
 
-BOSS = "boss_2"
+BOSS = "boss_5_guixingbu"
 DQN_model_path = "model_gpu_{}".format(BOSS)
 DQN_log_path = "logs_gpu_{}/".format(BOSS)
 WIDTH = 96
@@ -194,7 +216,7 @@ HEIGHT = 88
 window_size = (600,104,1900,1430)
 # station window_size
 
-blood_window = (155,172,520,1373)
+blood_window = (155,172,720,1373)
 # used to get boss and self blood
 
 action_size = 6
@@ -254,8 +276,8 @@ if __name__ == '__main__':
             # collect blood gray graph for count self and boss blood
             next_station = cv2.resize(screen_gray,(WIDTH,HEIGHT))
             next_station = np.array(next_station).reshape(-1,HEIGHT,WIDTH,1)[0]
-            next_boss_blood = boss_blood_count(blood_window_gray)
-            next_self_blood = self_blood_count(blood_window_gray)
+            next_boss_blood = recheck_next_blood(boss_blood, boss_blood_count(blood_window_gray))
+            next_self_blood = recheck_next_blood(self_blood, self_blood_count(blood_window_gray))
             reward, done, stop, emergence_break = action_judge(boss_blood, next_boss_blood,
                                                                self_blood, next_self_blood,
                                                                stop, emergence_break)
