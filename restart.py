@@ -13,7 +13,7 @@ def restart():
     time.sleep(0.1)
     directkeys.lock_vision()
     time.sleep(0.2)
-    directkeys.attack()
+    directkeys.slash_attack()
     print("开始新一轮")
   
 if __name__ == "__main__":  

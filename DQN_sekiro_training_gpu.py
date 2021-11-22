@@ -246,10 +246,10 @@ if __name__ == '__main__':
     # DQN init
     paused = pause_game(paused)
     # paused at the begin
-    emergence_break = 0     
-    # emergence_break is used to break down training
     # 用于防止出现意外紧急停止训练防止错误训练数据扰乱神经网络
     for episode in range(EPISODES):
+        # emergence_break is used to break down training
+        emergence_break = 0
         screen_gray = cv2.cvtColor(grab_screen(window_size),cv2.COLOR_BGR2GRAY)
         # collect station gray graph
         blood_window_gray = cv2.cvtColor(grab_screen(blood_window),cv2.COLOR_BGR2GRAY)
@@ -315,6 +315,7 @@ if __name__ == '__main__':
                 agent.save_model()
             paused = pause_game(paused)
             if done == 1:
+                take_action(0)
                 break
         if episode % 10 == 0:
             agent.save_model()

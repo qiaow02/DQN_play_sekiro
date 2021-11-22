@@ -278,11 +278,11 @@ def jump():
     PressKey(SPACE)
     time.sleep(0.1)
     ReleaseKey(SPACE)
-    attack()
-    time.sleep(0.1)
-    attack()
-    time.sleep(0.1)
-    attack()
+    slash_attack()
+    time.sleep(0.05)
+    slash_attack()
+    time.sleep(0.05)
+    slash_attack()
     #time.sleep(0.1)
     
 def right_dodge():#闪避
