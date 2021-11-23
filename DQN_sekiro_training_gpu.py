@@ -18,6 +18,10 @@ import pandas as pd
 from restart import restart
 import random
 import tensorflow.compat.v1 as tf
+from logger import Logger
+
+
+log = Logger('train.log', level='debug', fmt='%(asctime)s: %(message)s')
 
 def pause_game(paused):
     KEY_P = 'P'
@@ -133,11 +137,12 @@ def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, stop,
             done = 0
             stop = 0
         else:
-            reward = -1
+            reward = 2
             done = 0
             stop = 0
+            emergence_break = emergence_break + 2
         return reward, done, stop, emergence_break
-    elif next_boss_blood - boss_blood > 20:   # boss loss 1 life
+    elif next_boss_blood - boss_blood > 200:   # boss loss 1 life
         if (next_self_blood - self_blood) > 90:     # self dead
             reward = -10
             done = 1
@@ -287,17 +292,18 @@ if __name__ == '__main__':
             reward, done, stop, emergence_break = action_judge(boss_blood, next_boss_blood,
                                                                self_blood, next_self_blood,
                                                                stop, emergence_break)
-            print('self_blood=%s->%s boss_blood=%s->%s action=%s reward=%s'
+            log.logger.debug('self_blood=%s->%s boss_blood=%s->%s action=%s reward=%s'
                   %(self_blood, next_self_blood, boss_blood, next_boss_blood, get_action_name(action), reward))
-            # cv2.imwrite('D:\\app\\github\\DQN_play_sekiro\\imgs\\self_blood=%s next_self_blood=%s boss_blood=%s next_boss_blood=%s action=%s reward=%s.jpg'
-            #       %(self_blood, next_self_blood, boss_blood, next_boss_blood, get_action_name(action), reward), blood_window_gray)
+            cv2.imwrite('D:\\app\\github\\DQN_play_sekiro\\imgs\\self_blood=%s next_self_blood=%s boss_blood=%s next_boss_blood=%s action=%s reward=%s.jpg'
+                  %(self_blood, next_self_blood, boss_blood, next_boss_blood, get_action_name(action), reward), screen_gray)
             # get action reward
-            if emergence_break == 100:
+            if emergence_break >= 100:
                 # emergence break , save model and paused
                 # 遇到紧急情况，保存数据，并且暂停
                 print("emergence_break")
                 agent.save_model()
                 paused = True
+                emergence_break = 0
             agent.Store_Data(station, action, reward, next_station, done)
             if len(agent.replay_buffer) > big_BATCH_SIZE:
                 num_step += 1
