@@ -115,7 +115,7 @@ def get_action_name(action):
         return 'left_dodge'
 
 
-def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, stop, emergence_break):
+def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, action, stop, emergence_break):
     # get action reward
     # emergence_break is used to break down training
     # 用于防止出现意外紧急停止训练防止错误训练数据扰乱神经网络
@@ -132,59 +132,76 @@ def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, stop,
             reward = -10
             done = 1
             stop = 0
+            emergence_break = 0
         elif self_blood - next_self_blood > 5:      # self harm
             reward = -5
             done = 0
             stop = 0
+            emergence_break = 0
         else:
-            reward = 2
-            done = 0
-            stop = 0
-            emergence_break = emergence_break + 2
+            if action == 3 or action == 4 or action == 5: # defense or left_dodge or right_dodge
+                reward = 1
+                done = 0
+                stop = 0
+                emergence_break = emergence_break + 1
+            else: # attack
+                reward = -1
+                done = 0
+                stop = 0
+                emergence_break = emergence_break + 1
         return reward, done, stop, emergence_break
     elif next_boss_blood - boss_blood > 200:   # boss loss 1 life
         if (next_self_blood - self_blood) > 90:     # self dead
             reward = -10
             done = 1
             stop = 0
+            emergence_break = 0
         elif self_blood - next_self_blood > 5:      # self harm
             reward = 5
             done = 0
             stop = 0
+            emergence_break = 0
         else:
             reward = 20
             done = 0
             stop = 0
+            emergence_break = 0
         return reward, done, stop, emergence_break
     elif boss_blood - next_boss_blood > 3 and next_boss_blood > 0:  # boss harm
         if (next_self_blood - self_blood) > 90:  # self dead
             reward = -5
             done = 1
             stop = 0
+            emergence_break = 0
         elif self_blood - next_self_blood > 5:  # self harm
             reward = 1
             done = 0
             stop = 0
+            emergence_break = 0
         else:
             reward = 10
             done = 0
             stop = 0
+            emergence_break = 0
         return reward, done, stop, emergence_break
     elif boss_blood - next_boss_blood > 3 and next_boss_blood == 0:  # boss dead by attack
         if (next_self_blood - self_blood) > 90:  # self dead
             reward = -5
             done = 1
             stop = 0
+            emergence_break = 0
         elif self_blood - next_self_blood > 5:  # self harm
             reward = 10
             done = 0
             stop = 0
+            emergence_break= 0
         else:
             reward = 20
             done = 0
             stop = 0
+            emergence_break = 0
         return reward, done, stop, emergence_break
-    elif self_blood > 0 and next_boss_blood == 0: # boss dead anywhere
+    elif self_blood > 0 and next_boss_blood == 0:  # boss dead anywhere
         reward = 20
         done = 0
         stop = 0
@@ -194,6 +211,7 @@ def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, stop,
         reward = 0
         done = 0
         stop = 0
+        emergence_break = 0
     return reward, done, stop, emergence_break
 
 
@@ -291,11 +309,10 @@ if __name__ == '__main__':
             next_self_blood = recheck_next_blood(self_blood, self_blood_count(blood_window_gray))
             reward, done, stop, emergence_break = action_judge(boss_blood, next_boss_blood,
                                                                self_blood, next_self_blood,
-                                                               stop, emergence_break)
+                                                               action, stop, emergence_break)
             log.logger.debug('self_blood=%s->%s boss_blood=%s->%s action=%s reward=%s'
                   %(self_blood, next_self_blood, boss_blood, next_boss_blood, get_action_name(action), reward))
-            cv2.imwrite('D:\\app\\github\\DQN_play_sekiro\\imgs\\self_blood=%s next_self_blood=%s boss_blood=%s next_boss_blood=%s action=%s reward=%s.jpg'
-                  %(self_blood, next_self_blood, boss_blood, next_boss_blood, get_action_name(action), reward), screen_gray)
+            cv2.imwrite('D:\\app\\github\\DQN_play_sekiro\\imgs\\%s.jpg'%(last_time), screen_gray)
             # get action reward
             if emergence_break >= 100:
                 # emergence break , save model and paused
