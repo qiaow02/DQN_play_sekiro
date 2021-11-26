@@ -4,6 +4,7 @@ Created on Wed Jan 27 21:10:06 2021
 
 @author: pang
 """
+import base64
 
 import numpy as np
 from grabscreen import grab_screen
@@ -238,10 +239,15 @@ def copy_profile(boss_id):
     shutil.copytree(source_path, target_path)
     print('copy dir {} finished!'.format(boss_id))
 
-def loss_life_predict(filename):
-    loss_life_url = 'http://127.0.0.1:5000/predict'
-    data = json.dumps({'filename': filename})
-    r = requests.post(loss_life_url, json=data)
+def loss_life_predict(filename, img):
+    loss_life_url = 'http://127.0.0.1:5005/predict'
+    # data = json.dumps({'filename': filename})
+    # r = requests.post(loss_life_url, json=data)
+    files = {
+        # 'img_path': open('D:/app/github/DQN_play_sekiro/imgs/1637914159.468281.jpg', 'rb').read()
+        'img_path': img
+    }
+    r = requests.post('http://127.0.0.1:5005/predict', files=files)
     return r.json()['prediction']
 
 

@@ -1,5 +1,7 @@
+import base64
 import json
 
+import cv2
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import os
 from tensorflow.keras.preprocessing import image
@@ -171,9 +173,7 @@ def model_test():
 
 from tensorflow.keras.models import load_model
 model = load_model('loss_life/model/loss_life_model.h5')
-def loss_life_predict(imgfile, height=300, width=300):
-    print(imgfile)
-    img = tf.io.read_file(imgfile)
+def loss_life_predict(img):
     img = preprocess_image(img)
     img_array = tf.keras.preprocessing.image.img_to_array(img)
     img_array = tf.expand_dims(img_array, 0)
@@ -189,12 +189,13 @@ from flask import jsonify
 def index():
     if request.method == 'POST':
         # file = request.args.get('file')
-        filename = json.loads(request.json)['filename']
-        return jsonify({'prediction':loss_life_predict(filename)})
+        # filename = json.loads(request.json)['filename']
+        img = request.files['img_path'].stream.read()
+        return jsonify({'prediction':loss_life_predict(img)})
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5005)
     # print(int(0.9810114+0.5))
     # image_show()
     # train_model(create_model())
