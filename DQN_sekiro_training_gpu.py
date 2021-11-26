@@ -18,6 +18,8 @@ import pandas as pd
 from restart import restart
 import random
 import tensorflow.compat.v1 as tf
+# import tensorflow as tf
+import requests, json
 from logger import Logger
 
 
@@ -236,6 +238,12 @@ def copy_profile(boss_id):
     shutil.copytree(source_path, target_path)
     print('copy dir {} finished!'.format(boss_id))
 
+def loss_life_predict(filename):
+    loss_life_url = 'http://127.0.0.1:5000/predict'
+    data = json.dumps({'filename': filename})
+    r = requests.post(loss_life_url, json=data)
+    return r.json()['prediction']
+
 
 BOSS = "boss_5_guixingbu"
 DQN_model_path = "model_gpu_{}".format(BOSS)
@@ -286,7 +294,7 @@ if __name__ == '__main__':
         # used to update target Q network
         done = 0
         total_reward = 0
-        stop = 0    
+        stop = 0
         # 用于防止连续帧重复计算reward
         last_time = time.time()
         while True:
@@ -307,12 +315,17 @@ if __name__ == '__main__':
             next_station = np.array(next_station).reshape(-1,HEIGHT,WIDTH,1)[0]
             next_boss_blood = recheck_next_blood(boss_blood, boss_blood_count(blood_window_gray))
             next_self_blood = recheck_next_blood(self_blood, self_blood_count(blood_window_gray))
+            cv2.imwrite('D:/app/github/DQN_play_sekiro/imgs/%s.jpg' % (last_time), screen_gray)
+            if loss_life_predict('D:/app/github/DQN_play_sekiro/imgs/%s.jpg'%(last_time)) == 0:
+                # loss life
+                log.logger.debug('detect loss life, self_blood set 0')
+                next_self_blood = 0
             reward, done, stop, emergence_break = action_judge(boss_blood, next_boss_blood,
                                                                self_blood, next_self_blood,
                                                                action, stop, emergence_break)
             log.logger.debug('self_blood=%s->%s boss_blood=%s->%s action=%s reward=%s'
                   %(self_blood, next_self_blood, boss_blood, next_boss_blood, get_action_name(action), reward))
-            cv2.imwrite('D:\\app\\github\\DQN_play_sekiro\\imgs\\%s.jpg'%(last_time), screen_gray)
+
             # get action reward
             if emergence_break >= 100:
                 # emergence break , save model and paused

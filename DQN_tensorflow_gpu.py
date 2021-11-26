@@ -8,6 +8,7 @@ Created on Mon Jan 18 19:56:38 2021
 import gym
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
+# import tensorflow as tf
 import random
 from collections import deque
 import numpy as np

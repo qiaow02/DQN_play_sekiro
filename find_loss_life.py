@@ -1,3 +1,5 @@
+import json
+
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import os
 from tensorflow.keras.preprocessing import image
@@ -8,8 +10,12 @@ import numpy as np
 import time
 
 from tensorflow.keras.preprocessing import image
+import tensorflow as tf
 import matplotlib.pyplot as plt
 import os
+
+from flask import Flask
+app = Flask(__name__)
 
 warnings.filterwarnings("ignore", category=UserWarning)     # 忽略警告
 
@@ -132,7 +138,65 @@ def train_result():
     plt.show()
 
 
+def preprocess_image(img, height=300, width=300):
+    img = tf.image.decode_jpeg(img, channels=3)
+    img = tf.image.resize(img, [height, width])
+    img /= 255.0
+    return img
+
+
+def model_test():
+    from tensorflow.keras.models import load_model
+    model = load_model('loss_life/model/loss_life_model.h5')
+
+    test_dir = 'D:/app/github/DQN_play_sekiro/loss_life/test/normal'
+    fnames = [os.path.join(test_dir, fname) for fname in os.listdir(test_dir)]
+    i = 0
+    for file in fnames:
+        img = tf.io.read_file(file)
+        img = preprocess_image(img)
+        img_array = tf.keras.preprocessing.image.img_to_array(img)
+        img_array = tf.expand_dims(img_array, 0)
+        prediction = model.predict(img_array)
+        # print(file)
+        # print(prediction)
+        prediction = int(prediction + 0.5)
+        # if prediction > 0:
+            # print('normal ')
+        # else:
+        if prediction == 0:
+            i += 1
+            print('loss life {}'.format(file))
+    print(i/len(fnames))
+
+from tensorflow.keras.models import load_model
+model = load_model('loss_life/model/loss_life_model.h5')
+def loss_life_predict(imgfile, height=300, width=300):
+    print(imgfile)
+    img = tf.io.read_file(imgfile)
+    img = preprocess_image(img)
+    img_array = tf.keras.preprocessing.image.img_to_array(img)
+    img_array = tf.expand_dims(img_array, 0)
+    prediction = model.predict(img_array)
+    return int(prediction + 0.5)    # normal > 0, loss_life = 0
+
+
+from flask import url_for, request
+from flask import jsonify
+
+
+@app.route('/predict', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        # file = request.args.get('file')
+        filename = json.loads(request.json)['filename']
+        return jsonify({'prediction':loss_life_predict(filename)})
+
+
 if __name__ == '__main__':
+    app.run(debug=True)
+    # print(int(0.9810114+0.5))
     # image_show()
-    train_model(create_model())
-    train_result()
+    # train_model(create_model())
+    # train_result()
+    # print(loss_life_predict('D:/app/github/DQN_play_sekiro/imgs/1637903045.4650376.jpg'))
