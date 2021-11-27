@@ -258,7 +258,7 @@ def loss_life_predict(filename=None, img=None):
             files = {
                 'img_path': open(filename, 'rb').read()
             }
-        r = requests.post(loss_life_url, files=files)
+        r = requests.post(loss_life_url, files=files, timeout=1)
         return r.json()['prediction']
     except Exception as e:
         log.logger.error('loss_life_predict fail: {}'.format(e))
