@@ -27,4 +27,4 @@ class Logger(object):
         # midnight 每天凌晨
         th.setFormatter(format_str)#设置文件里写入的格式
         self.logger.addHandler(sh) #把对象加到logger里
-        self.logger.addHandler(th)
+        # self.logger.addHandler(th)

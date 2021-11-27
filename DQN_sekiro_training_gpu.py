@@ -123,15 +123,20 @@ def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, actio
     # emergence_break is used to break down training
     # 用于防止出现意外紧急停止训练防止错误训练数据扰乱神经网络
     if (self_blood == 0 and boss_blood == 0) \
-            or (next_self_blood == 0 and next_boss_blood == 0)\
-            or (self_blood == 0 and next_self_blood == 0):
+            or (next_self_blood == 0 and next_boss_blood == 0):
         reward = 0
         done = 0
         stop = 0
         emergence_break = 100
         return reward, done, stop, emergence_break
+    elif (self_blood == 0 and next_self_blood == 0):
+        reward = 0
+        done = 0
+        stop = 0
+        emergence_break = emergence_break + 1
+        return reward, done, stop, emergence_break
     elif next_boss_blood - boss_blood == 0 and boss_blood > 0:         # when boss no harm
-        if (next_self_blood - self_blood) > 90:     # self dead
+        if next_self_blood == 0 or ((next_self_blood - self_blood) > 90):     # self dead
             reward = -10
             done = 1
             stop = 0
@@ -154,7 +159,7 @@ def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, actio
                 emergence_break = emergence_break + 1
         return reward, done, stop, emergence_break
     elif next_boss_blood - boss_blood > 200:   # boss loss 1 life
-        if (next_self_blood - self_blood) > 90:     # self dead
+        if next_self_blood == 0 or ((next_self_blood - self_blood) > 90):     # self dead
             reward = -10
             done = 1
             stop = 0
@@ -171,7 +176,7 @@ def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, actio
             emergence_break = 0
         return reward, done, stop, emergence_break
     elif boss_blood - next_boss_blood > 3 and next_boss_blood > 0:  # boss harm
-        if (next_self_blood - self_blood) > 90:  # self dead
+        if next_self_blood == 0 or ((next_self_blood - self_blood) > 90):  # self dead
             reward = -5
             done = 1
             stop = 0
@@ -188,7 +193,7 @@ def action_judge(boss_blood, next_boss_blood, self_blood, next_self_blood, actio
             emergence_break = 0
         return reward, done, stop, emergence_break
     elif boss_blood - next_boss_blood > 3 and next_boss_blood == 0:  # boss dead by attack
-        if (next_self_blood - self_blood) > 90:  # self dead
+        if next_self_blood == 0 or ((next_self_blood - self_blood) > 90):  # self dead
             reward = -5
             done = 1
             stop = 0
@@ -239,16 +244,24 @@ def copy_profile(boss_id):
     shutil.copytree(source_path, target_path)
     print('copy dir {} finished!'.format(boss_id))
 
-def loss_life_predict(filename, img):
-    loss_life_url = 'http://127.0.0.1:5005/predict'
-    # data = json.dumps({'filename': filename})
-    # r = requests.post(loss_life_url, json=data)
-    files = {
-        # 'img_path': open('D:/app/github/DQN_play_sekiro/imgs/1637914159.468281.jpg', 'rb').read()
-        'img_path': img
-    }
-    r = requests.post('http://127.0.0.1:5005/predict', files=files)
-    return r.json()['prediction']
+
+def loss_life_predict(filename=None, img=None):
+    try:
+        loss_life_url = 'http://52.81.184.99:5005/predict'
+        # data = json.dumps({'filename': filename})
+        # r = requests.post(loss_life_url, json=data)
+        if filename is None:
+            files = {
+                'img_path': img
+            }
+        else:
+            files = {
+                'img_path': open(filename, 'rb').read()
+            }
+        r = requests.post(loss_life_url, files=files)
+        return r.json()['prediction']
+    except Exception as e:
+        log.logger.error('loss_life_predict fail: {}'.format(e))
 
 
 BOSS = "boss_5_guixingbu"
@@ -279,6 +292,12 @@ paused = True
 
 if __name__ == '__main__':
     copy_profile(BOSS)
+
+    config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
+    config.gpu_options.per_process_gpu_memory_fraction = 0.5
+    config.gpu_options.allow_growth = True
+    tf.compat.v1.keras.backend.set_session(tf.compat.v1.Session(config=config))
+
     agent = DQN(WIDTH, HEIGHT, action_size, DQN_model_path, DQN_log_path)
     # DQN init
     paused = pause_game(paused)
@@ -313,7 +332,8 @@ if __name__ == '__main__':
             action = agent.Choose_Action(station)
             take_action(action)
             # take station then the station change
-            screen_gray = cv2.cvtColor(grab_screen(window_size),cv2.COLOR_BGR2GRAY)
+            screen_color = grab_screen(window_size)
+            screen_gray = cv2.cvtColor(screen_color,cv2.COLOR_BGR2GRAY)
             # collect station gray graph
             blood_window_gray = cv2.cvtColor(grab_screen(blood_window),cv2.COLOR_BGR2GRAY)
             # collect blood gray graph for count self and boss blood
@@ -321,8 +341,8 @@ if __name__ == '__main__':
             next_station = np.array(next_station).reshape(-1,HEIGHT,WIDTH,1)[0]
             next_boss_blood = recheck_next_blood(boss_blood, boss_blood_count(blood_window_gray))
             next_self_blood = recheck_next_blood(self_blood, self_blood_count(blood_window_gray))
-            cv2.imwrite('D:/app/github/DQN_play_sekiro/imgs/%s.jpg' % (last_time), screen_gray)
-            if loss_life_predict('D:/app/github/DQN_play_sekiro/imgs/%s.jpg'%(last_time)) == 0:
+            cv2.imwrite('F:/app/github/DQN_play_sekiro/imgs/%s.jpg' % (get_action_name(action)), screen_gray)
+            if loss_life_predict(filename='F:/app/github/DQN_play_sekiro/imgs/%s.jpg' % (get_action_name(action))) == 0:
                 # loss life
                 log.logger.debug('detect loss life, self_blood set 0')
                 next_self_blood = 0

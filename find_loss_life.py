@@ -174,6 +174,7 @@ def model_test():
 from tensorflow.keras.models import load_model
 model = load_model('loss_life/model/loss_life_model.h5')
 def loss_life_predict(img):
+    # model.save('loss_life_model')
     img = preprocess_image(img)
     img_array = tf.keras.preprocessing.image.img_to_array(img)
     img_array = tf.expand_dims(img_array, 0)
